@@ -11,7 +11,7 @@ class Roleplay(BotModule):
         help_text = 'Usage:\n' \
                     '!rp bio charactername - shows character sheet. You will be prompted to make a new one if the character does not exist. \n' \
                     '-  !rp bio new ... - Insert new character with this EXACT ordering: !rp bio new name gender species status age height weight desc pic colour \n' \
-                    '-  !rp bio edit ... - Edits character. Use EXACT ordering as !rp bio new. You can only edit if you are the creator of the entry.'
+                    '-  !rp bio edit ... - Edits character. Use EXACT ordering as !rp bio new. You can only edit if you are the creator of the entry.' \
                     'You must be careful with quotation marks! Use "" if any argument has multiple words.\n' \
                     '!rp nextday summary[optional] - progresses the roleplay channel to the next day.\n' \
                     '!rp setting newlocation - changes setting of the roleplay channel to another location.'
