@@ -2,6 +2,8 @@ import discord
 from tinydb import TinyDB, Query
 from modules.botModule import BotModule
 import shlex
+from datetime import datetime, timedelta
+import time
 
 class Roleplay(BotModule):
         name = 'roleplay'
@@ -12,13 +14,27 @@ class Roleplay(BotModule):
                     '!rp bio charactername - shows character sheet. You will be prompted to make a new one if the character does not exist. \n' \
                     '-  !rp bio new ... - Insert new character with this EXACT ordering: !rp bio new name gender species status age height weight desc pic colour \n' \
                     '-  !rp bio edit ... - Edits character. Use EXACT ordering as !rp bio new. You can only edit if you are the creator of the entry.' \
-                    'You must be careful with quotation marks! Use "" if any argument has multiple words.\n' \
-                    '!rp nextday summary[optional] - progresses the roleplay channel to the next day.\n' \
+                    'You must be careful with quotation marks! Use "" if any argument has multiple words.\n\n' \
+                    '!rp day - Progresses the roleplay channel to the next day.\n' \
+                    '-  !rp day - Shows current date (server-wide for now)\n' \
+                    '-  !rp day edit newday-newmonth-newyear - Edits the date to the new date.\n' \
+                    '-  !rp day + - Increments day to next day\n\n' \
                     '!rp setting newlocation - changes setting of the roleplay channel to another location.'
 
         trigger_string = 'rp'
 
+        next_day_role = ['Literal Emerald'] # Which role is allowed to advance to next day.
+
+        date_format = '%Y-%m-%d'
+
         module_version = '0.1.0'
+
+        def is_valid_date(self, x):
+            try:
+                datetime.strptime(x, self.date_format)
+                return True
+            except ValueError:
+                return False
 
         async def parse_command(self, message, client):
             msg = shlex.split(message.content)
@@ -77,10 +93,47 @@ class Roleplay(BotModule):
                             embed = discord.Embed(title=character['name'], description=text, colour=character['colour'])
                             embed.set_image(url=character['pic'])
                             await client.send_message(message.channel, embed=embed)
-                elif msg[1] == 'nextday':
+                elif msg[1] == 'day':
+                    author_roles = message.author.roles
+                    author_roles = [x.name for x in message.author.roles]
                     table = self.module_db.table('day')
-                    # TODO: Progress to next day
-                    pass
+                    if len(msg) > 2:
+                    # That means it can only be !rp day foobar...
+                        if msg[2] == 'edit':
+                            if any(i in author_roles for i in self.next_day_role):
+                                if self.is_valid_date(msg[3]):
+                                    if len(self.module_db) == 0:
+                                        # There is no date set up yet.
+                                        self.module_db.insert({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name})
+                                        msg = "[:ok_hand:] Date has been successfully set."
+                                        await client.send_message(message.channel, msg)
+                                    else:
+                                        # There is a date!
+                                        self.module_db.update({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name})
+                                        msg = "[:ok_hand:] Date has been successfully edited."
+                                        await client.send_message(message.channel, msg)
+                                else:
+                                    msg = "[!] Bad date format. The current date format is set to: " + self.date_format + "."
+                                    await client.send_message(message.channel, msg)
+                            else:
+                                msg = "[!] You do not have permissions to edit the time."
+                                await client.send_message(message.channel, msg)
+                        elif msg[2] == '+':
+                            if any(i in author_roles for i in self.next_day_role):
+                                new_day = datetime.strptime(self.module_db.all()[0]['date'], self.date_format) + timedelta(days=1)
+                                self.module_db.update({'date': datetime.strftime(new_day, self.date_format), 'date_actual': int(time.time()), 'last_edit': message.author.name})
+                                msg = "[:ok_hand:] Date set to " + datetime.strftime(new_day, self.date_format) + "."
+                                await client.send_message(message.channel, msg)
+                            else:
+                                msg = "[!] You do not have permission to advance the time."
+                                await client.send_message(message.channel, msg)
+                    else:
+                        # It can only be !rp day
+                        date_info = self.module_db.all()[0]
+                        text = 'Last changed: ' + datetime.fromtimestamp(date_info['date_actual']).strftime(self.date_format + ' %X') + ' GMT \n' \
+                               'Edited by: ' + date_info['last_edit'] + '\n'
+                        embed = discord.Embed(title=date_info['date'], description=text, colour=0xBADA55)
+                        await client.send_message(message.channel, embed=embed)
                 elif msg[1] == 'setting':
                     table = self.module_db.table('setting')
                     # TODO: Change setting of roleplay scene
