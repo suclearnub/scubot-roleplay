@@ -17,8 +17,9 @@ class Roleplay(BotModule):
                     'You must be careful with quotation marks! Use "" if any argument has multiple words.\n\n' \
                     '!rp day - Progresses the roleplay channel to the next day.\n' \
                     '-  !rp day - Shows current date (server-wide for now)\n' \
-                    '-  !rp day edit newday-newmonth-newyear - Edits the date to the new date.\n' \
-                    '-  !rp day + - Increments day to next day\n\n' \
+                    '-  !rp day edit ' + date_format + ' - Edits the date to the new date.\n' \
+                    '-  !rp day + - Increments day to next day\n' \
+                    '-  !rp day all - Shows dates in all channels\n\n' \
                     '!rp setting newlocation - changes setting of the roleplay channel to another location.'
 
         trigger_string = 'rp'
@@ -39,6 +40,15 @@ class Roleplay(BotModule):
                 return True
             except ValueError:
                 return False
+
+        async def update_channel_description(self, message, client, date):
+            try:
+                await client.edit_channel(message.channel, topic=self.channel_desc_prefix + date)
+                msg = "[:ok_hand:] Updated channel description successfully."
+                await client.send_message(message.channel, msg)
+            except Exception:
+                msg = "[!] Could not update channel description to match current date. Please update manually, and allow the bot to do so in the future. "
+                await client.send_message(message.channel, msg)
 
         async def parse_command(self, message, client):
             msg = shlex.split(message.content)
@@ -111,11 +121,13 @@ class Roleplay(BotModule):
                                         self.module_db.insert({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id})
                                         msg = "[:ok_hand:] Date has been successfully set."
                                         await client.send_message(message.channel, msg)
+                                        await self.update_channel_description(message, client, msg[3])
                                     else:
                                         # There is a date!
                                         self.module_db.update({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id}, roleplay_query.channel == message.channel.id)
                                         msg = "[:ok_hand:] Date has been successfully edited."
                                         await client.send_message(message.channel, msg)
+                                        await self.update_channel_description(message, client, msg[3])
                                 else:
                                     msg = "[!] Bad date format. The current date format is set to: " + self.date_format + "."
                                     await client.send_message(message.channel, msg)
@@ -128,6 +140,7 @@ class Roleplay(BotModule):
                                 self.module_db.update({'date': datetime.strftime(new_day, self.date_format), 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id}, roleplay_query.channel == message.channel.id)
                                 msg = "[:ok_hand:] Date incremented to " + datetime.strftime(new_day, self.date_format) + "."
                                 await client.send_message(message.channel, msg)
+                                await self.update_channel_description(message, client, datetime.strftime(new_day, self.date_format))
                             else:
                                 msg = "[!] You do not have permission to advance the time."
                                 await client.send_message(message.channel, msg)
