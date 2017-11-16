@@ -10,6 +10,8 @@ class Roleplay(BotModule):
 
         description = 'Provides useful functions for role-playing games.'
 
+        date_format = '%Y-%m-%d'
+
         help_text = 'Usage:\n' \
                     '!rp bio charactername - shows character sheet. You will be prompted to make a new one if the character does not exist. \n' \
                     '-  !rp bio new ... - Insert new character with this EXACT ordering: !rp bio new name gender species status age height weight desc pic colour \n' \
@@ -26,7 +28,6 @@ class Roleplay(BotModule):
 
         next_day_role = ['Literal Emerald'] # Which role is allowed to edit dates
 
-        date_format = '%Y-%m-%d'
 
         channel_desc_prefix = 'Current date: ' # Prefix before the current date as shown in the channel description
 
