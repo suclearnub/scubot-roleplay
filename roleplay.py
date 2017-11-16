@@ -26,7 +26,7 @@ class Roleplay(BotModule):
 
         trigger_string = 'rp'
 
-        next_day_role = ['Literal Emerald'] # Which role is allowed to edit dates
+        next_day_role = ['@everyone'] # Which role is allowed to edit dates. You can use '@everyone'.
 
 
         channel_desc_prefix = 'Current date: ' # Prefix before the current date as shown in the channel description
