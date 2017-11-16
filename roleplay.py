@@ -147,20 +147,24 @@ class Roleplay(BotModule):
                                 await client.send_message(message.channel, msg)
                         elif msg[2] == 'all':
                             text = ''
-                            for entry in self.module_db:
-                                channel = discord.Client.get_channel(client, entry['channel'])
-                                if channel is None:
-                                    # The channel has disappeared.
-                                    channel_name = entry['channel'] + ' (Missing channel)'
-                                else:
-                                    channel_name = channel.name
-                                text += '#' + channel_name + '\n' \
-                                        'Date: ' + entry['date'] + '\n' \
-                                        'Last changed: ' + datetime.fromtimestamp(entry['date_actual']).strftime(self.date_format + ' %X') + ' GMT \n' \
-                                        'Edited by: ' + entry['last_edit'] + '\n' \
-                                        '\n\n'
-                            embed = discord.Embed(title='Overview', description=text, colour=self.date_colour)
-                            await client.send_message(message.channel, embed=embed)
+                            if len(self.module_db) != 0:
+                                for entry in self.module_db:
+                                    channel = discord.Client.get_channel(client, entry['channel'])
+                                    if channel is None:
+                                        # The channel has disappeared.
+                                        channel_name = entry['channel'] + ' (Missing channel)'
+                                    else:
+                                        channel_name = channel.name
+                                    text += '#' + channel_name + '\n' \
+                                            'Date: ' + entry['date'] + '\n' \
+                                            'Last changed: ' + datetime.fromtimestamp(entry['date_actual']).strftime(self.date_format + ' %X') + ' GMT \n' \
+                                            'Edited by: ' + entry['last_edit'] + '\n' \
+                                            '\n\n'
+                                embed = discord.Embed(title='Overview', description=text, colour=self.date_colour)
+                                await client.send_message(message.channel, embed=embed)
+                            else:
+                                msg = "[!] No date set for any channels."
+                                await client.send_message(message.channel, msg)
                     else:
                         # It can only be !rp day
                         if self.module_db.get(roleplay_query.channel == message.channel.id) is None:
