@@ -117,18 +117,19 @@ class Roleplay(BotModule):
                         if msg[2] == 'edit':
                             if any(i in author_roles for i in self.next_day_role):
                                 if self.is_valid_date(msg[3]):
+                                    desc_date = msg[3]
                                     if self.module_db.get(roleplay_query.channel == message.channel.id) is None:
                                         # There is no date set up yet.
                                         self.module_db.insert({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id})
                                         msg = "[:ok_hand:] Date has been successfully set."
                                         await client.send_message(message.channel, msg)
-                                        await self.update_channel_description(message, client, msg[3])
+                                        await self.update_channel_description(message, client, desc_date)
                                     else:
                                         # There is a date!
                                         self.module_db.update({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id}, roleplay_query.channel == message.channel.id)
                                         msg = "[:ok_hand:] Date has been successfully edited."
                                         await client.send_message(message.channel, msg)
-                                        await self.update_channel_description(message, client, msg[3])
+                                        await self.update_channel_description(message, client, desc_date)
                                 else:
                                     msg = "[!] Bad date format. The current date format is set to: " + self.date_format + "."
                                     await client.send_message(message.channel, msg)
