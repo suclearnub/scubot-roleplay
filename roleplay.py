@@ -63,7 +63,7 @@ class Roleplay(BotModule):
                                 msg = "[!] You did not provide enough information."
                                 await client.send_message(message.channel, msg)
                             else:
-                                self.module_db.insert({'name': msg[3], 'gender': msg[4], 'species': msg[5], 'status': msg[6], 'age': msg[7], 'height': msg[8], 'weight': msg[9], 'desc': msg[10], 'pic': msg[11], 'author': message.author.name, 'colour': int(msg[12], 16), 'authorid': message.author.id})
+                                table.insert({'name': msg[3], 'gender': msg[4], 'species': msg[5], 'status': msg[6], 'age': msg[7], 'height': msg[8], 'weight': msg[9], 'desc': msg[10], 'pic': msg[11], 'author': message.author.name, 'colour': int(msg[12], 16), 'authorid': message.author.id})
                                 msg = "[:ok_hand:] Entry added."
                                 await client.send_message(message.channel, msg)
                         else:
@@ -75,28 +75,28 @@ class Roleplay(BotModule):
                                 msg = "[!] You did not provide enough information."
                                 await client.send_message(message.channel, msg)
                             else:
-                                if self.module_db.get(roleplay_query.name == msg[3]) is None:
+                                if table.get(roleplay_query.name == msg[3]) is None:
                                     # The character does not exist. How do you edit THAT?
                                     msg = "[!] This character does not exist."
                                     await client.send_message(message.channel, msg)
-                                elif self.module_db.get(roleplay_query.name == msg[3])['authorid'] != message.author.id:
+                                elif table.get(roleplay_query.name == msg[3])['authorid'] != message.author.id:
                                     # They're not the author of that bio sheet
                                     msg = "[!] You do not have permission to edit this."
                                     await client.send_message(message.channel, msg)
                                 else:
-                                    self.module_db.update({'name': msg[3], 'gender': msg[4], 'species': msg[5], 'status': msg[6], 'age': msg[7], 'height': msg[8], 'weight': msg[9], 'desc': msg[10], 'pic': msg[11], 'author': message.author.name, 'colour': int(msg[12], 16), 'authorid': message.author.id}, roleplay_query.name == msg[3])
+                                    table.update({'name': msg[3], 'gender': msg[4], 'species': msg[5], 'status': msg[6], 'age': msg[7], 'height': msg[8], 'weight': msg[9], 'desc': msg[10], 'pic': msg[11], 'author': message.author.name, 'colour': int(msg[12], 16), 'authorid': message.author.id}, roleplay_query.name == msg[3])
                                     msg = "[:ok_hand:] Entry updated."
                                     await client.send_message(message.channel, msg)
                         else:
                             msg = "[!] You did not provide any information."
                             await client.send_message(message.channel, msg)
                     else:
-                        if self.module_db.get(roleplay_query.name == msg[2]) is None:
+                        if table.get(roleplay_query.name == msg[2]) is None:
                             # Then this character does not exist.
                             msg = "[!] This character does not exist."
                             await client.send_message(message.channel, msg)
                         else:
-                            character = self.module_db.get(roleplay_query.name == msg[2])
+                            character = table.get(roleplay_query.name == msg[2])
                             text = 'By: ' + character['author'] + '\n' \
                                    'Gender: ' + character['gender'] + '\n' \
                                    'Species: ' + character['species'] + '\n' \
@@ -118,15 +118,15 @@ class Roleplay(BotModule):
                             if any(i in author_roles for i in self.next_day_role):
                                 if self.is_valid_date(msg[3]):
                                     desc_date = msg[3]
-                                    if self.module_db.get(roleplay_query.channel == message.channel.id) is None:
+                                    if table.get(roleplay_query.channel == message.channel.id) is None:
                                         # There is no date set up yet.
-                                        self.module_db.insert({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id})
+                                        table.insert({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id})
                                         msg = "[:ok_hand:] Date has been successfully set."
                                         await client.send_message(message.channel, msg)
                                         await self.update_channel_description(message, client, desc_date)
                                     else:
                                         # There is a date!
-                                        self.module_db.update({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id}, roleplay_query.channel == message.channel.id)
+                                        table.update({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id}, roleplay_query.channel == message.channel.id)
                                         msg = "[:ok_hand:] Date has been successfully edited."
                                         await client.send_message(message.channel, msg)
                                         await self.update_channel_description(message, client, desc_date)
@@ -138,8 +138,8 @@ class Roleplay(BotModule):
                                 await client.send_message(message.channel, msg)
                         elif msg[2] == '+':
                             if any(i in author_roles for i in self.next_day_role):
-                                new_day = datetime.strptime(self.module_db.get(roleplay_query.channel == message.channel.id)['date'], self.date_format) + timedelta(days=1)
-                                self.module_db.update({'date': datetime.strftime(new_day, self.date_format), 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id}, roleplay_query.channel == message.channel.id)
+                                new_day = datetime.strptime(table.get(roleplay_query.channel == message.channel.id)['date'], self.date_format) + timedelta(days=1)
+                                table.update({'date': datetime.strftime(new_day, self.date_format), 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id}, roleplay_query.channel == message.channel.id)
                                 msg = "[:ok_hand:] Date incremented to " + datetime.strftime(new_day, self.date_format) + "."
                                 await client.send_message(message.channel, msg)
                                 await self.update_channel_description(message, client, datetime.strftime(new_day, self.date_format))
@@ -148,8 +148,8 @@ class Roleplay(BotModule):
                                 await client.send_message(message.channel, msg)
                         elif msg[2] == 'all':
                             text = ''
-                            if len(self.module_db) != 0:
-                                for entry in self.module_db:
+                            if len(table) != 0:
+                                for entry in table:
                                     channel = discord.Client.get_channel(client, entry['channel'])
                                     if channel is None:
                                         # The channel has disappeared.
@@ -168,18 +168,15 @@ class Roleplay(BotModule):
                                 await client.send_message(message.channel, msg)
                     else:
                         # It can only be !rp day
-                        if self.module_db.get(roleplay_query.channel == message.channel.id) is None:
+                        if table.get(roleplay_query.channel == message.channel.id) is None:
                             msg = "[!] No date set for this channel."
                             await client.send_message(message.channel, msg)
                         else:
-                            date_info = self.module_db.get(roleplay_query.channel == message.channel.id)
+                            date_info = table.get(roleplay_query.channel == message.channel.id)
                             text = 'Last changed: ' + datetime.fromtimestamp(date_info['date_actual']).strftime(self.date_format + ' %X') + ' GMT \n' \
                                    'Edited by: ' + date_info['last_edit'] + '\n'
                             embed = discord.Embed(title=date_info['date'], description=text, colour=self.date_colour)
                             await client.send_message(message.channel, embed=embed)
-                elif msg[1] == 'setting':
-                    table = self.module_db.table('setting')
-                    # TODO: Change setting of roleplay scene
                 else:
                     pass
             else:
