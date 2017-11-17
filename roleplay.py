@@ -4,6 +4,7 @@ from modules.botModule import BotModule
 import shlex
 from datetime import datetime, timedelta
 import time
+from dateutil.parser import parse
 
 class Roleplay(BotModule):
         name = 'roleplay'
@@ -138,7 +139,7 @@ class Roleplay(BotModule):
                                 await client.send_message(message.channel, msg)
                         elif msg[2] == '+':
                             if any(i in author_roles for i in self.next_day_role):
-                                new_day = datetime.strptime(table.get(roleplay_query.channel == message.channel.id)['date'], self.date_format) + timedelta(days=1)
+                                new_day = parse(table.get(roleplay_query.channel == message.channel.id)['date']) + timedelta(days=1)
                                 table.update({'date': datetime.strftime(new_day, self.date_format), 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id}, roleplay_query.channel == message.channel.id)
                                 msg = "[:ok_hand:] Date incremented to " + datetime.strftime(new_day, self.date_format) + "."
                                 await client.send_message(message.channel, msg)
