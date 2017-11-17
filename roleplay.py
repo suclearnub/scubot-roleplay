@@ -29,6 +29,7 @@ class Roleplay(BotModule):
 
         next_day_role = ['@everyone'] # Which role is allowed to edit dates. You can use '@everyone'.
 
+        remove_day_role = ['@everyone'] # Which role is allowed to remove dates. You can use '@everyone' (but why??)
 
         channel_desc_prefix = 'Current date: ' # Prefix before the current date as shown in the channel description
 
@@ -117,22 +118,26 @@ class Roleplay(BotModule):
                     # That means it can only be !rp day foobar...
                         if msg[2] == 'edit':
                             if any(i in author_roles for i in self.next_day_role):
-                                if self.is_valid_date(msg[3]):
-                                    desc_date = msg[3]
-                                    if table.get(roleplay_query.channel == message.channel.id) is None:
-                                        # There is no date set up yet.
-                                        table.insert({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id})
-                                        msg = "[:ok_hand:] Date has been successfully set."
-                                        await client.send_message(message.channel, msg)
-                                        await self.update_channel_description(message, client, desc_date)
+                                if len(msg) > 3:
+                                    if self.is_valid_date(msg[3]):
+                                        desc_date = msg[3]
+                                        if table.get(roleplay_query.channel == message.channel.id) is None:
+                                            # There is no date set up yet.
+                                            table.insert({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id})
+                                            msg = "[:ok_hand:] Date has been successfully set."
+                                            await client.send_message(message.channel, msg)
+                                            await self.update_channel_description(message, client, desc_date)
+                                        else:
+                                            # There is a date!
+                                            table.update({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id}, roleplay_query.channel == message.channel.id)
+                                            msg = "[:ok_hand:] Date has been successfully edited."
+                                            await client.send_message(message.channel, msg)
+                                            await self.update_channel_description(message, client, desc_date)
                                     else:
-                                        # There is a date!
-                                        table.update({'date': msg[3], 'date_actual': int(time.time()), 'last_edit': message.author.name, 'channel': message.channel.id}, roleplay_query.channel == message.channel.id)
-                                        msg = "[:ok_hand:] Date has been successfully edited."
+                                        msg = "[!] Bad date format. The current date format is set to: " + self.date_format + "."
                                         await client.send_message(message.channel, msg)
-                                        await self.update_channel_description(message, client, desc_date)
                                 else:
-                                    msg = "[!] Bad date format. The current date format is set to: " + self.date_format + "."
+                                    msg = "[!] No date specified."
                                     await client.send_message(message.channel, msg)
                             else:
                                 msg = "[!] You do not have permissions to edit the time."
@@ -147,6 +152,22 @@ class Roleplay(BotModule):
                             else:
                                 msg = "[!] You do not have permission to advance the time."
                                 await client.send_message(message.channel, msg)
+                        elif msg[2] == 'rm':
+                            if any(i in author_roles for i in self.next_day_role):
+                                if len(msg) > 3:
+                                    if table.get(roleplay_query.channel == msg[3]) is not None:
+                                        table.remove(roleplay_query.channel == msg[3])
+                                        msg = "[:ok_hand:] Removed date in that channel."
+                                        await clieng.send_message(message.channel, msg)
+                                    else:
+                                        msg = "[!] That channel does not have an existing date."
+                                        await client.send_message(message.channel, msg)
+                                else:
+                                    msg = "[!] No channel to remove specified."
+                                    await client.send_message(message.channel, msg)
+                            else:
+                                msg = "[!] You do not have permissions to remove dates."
+                                await client.send_message(message.channel, msg)
                         elif msg[2] == 'all':
                             text = ''
                             if len(table) != 0:
@@ -155,9 +176,12 @@ class Roleplay(BotModule):
                                     if channel is None:
                                         # The channel has disappeared.
                                         channel_name = entry['channel'] + ' (Missing channel)'
+                                        channel_id = entry['channel']
                                     else:
                                         channel_name = channel.name
+                                        channel_id = channel.id
                                     text += '#' + channel_name + '\n' \
+                                            'ID: ' + channel_id + '\n' \
                                             'Date: ' + entry['date'] + '\n' \
                                             'Last changed: ' + datetime.fromtimestamp(entry['date_actual']).strftime(self.date_format + ' %X') + ' GMT \n' \
                                             'Edited by: ' + entry['last_edit'] + '\n' \
