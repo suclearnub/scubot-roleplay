@@ -62,7 +62,11 @@ class Roleplay(BotModule):
                     if msg[2] == 'new':
                         if len(msg) > 3:
                             if len(msg) != 13:
-                                msg = "[!] You did not provide enough information."
+                                msg = "[!] Bad data. Check your data ordering."
+                                await client.send_message(message.channel, msg)
+                            elif table.get(roleplay_query.name == msg[3]) is not None:
+                                # Then the character already exists. No dupes!
+                                msg = "[!] This character already exists. Did you mean `edit`?"
                                 await client.send_message(message.channel, msg)
                             else:
                                 table.insert({'name': msg[3], 'gender': msg[4], 'species': msg[5], 'status': msg[6], 'age': msg[7], 'height': msg[8], 'weight': msg[9], 'desc': msg[10], 'pic': msg[11], 'author': message.author.name, 'colour': int(msg[12], 16), 'authorid': message.author.id})
@@ -74,7 +78,7 @@ class Roleplay(BotModule):
                     elif msg[2] == 'edit':
                         if len(msg) > 3:
                             if len(msg) != 13:
-                                msg = "[!] You did not provide enough information."
+                                msg = "[!] Bad data. Check your data ordering."
                                 await client.send_message(message.channel, msg)
                             else:
                                 if table.get(roleplay_query.name == msg[3]) is None:
