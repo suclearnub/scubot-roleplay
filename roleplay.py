@@ -96,6 +96,22 @@ class Roleplay(BotModule):
                         else:
                             msg = "[!] You did not provide any information."
                             await client.send_message(message.channel, msg)
+                    elif msg[2] == 'rm':
+                        if len(msg) > 3:
+                            if table.get(roleplay_query.name == msg[3]) is not None:
+                                if table.get(roleplay_query.name == msg[3])['authorid'] == message.author.id:
+                                    table.remove(roleplay_query.name == msg[3])
+                                    msg = "[:ok_hand:] Removed character."
+                                    await client.send_message(message.channel, msg)
+                                else:
+                                    msg = "[!] You do not have permission to remove this."
+                                    await client.send_message(message.channel, msg)
+                            else:
+                                msg = "[!] This character does not exist."
+                                await client.send_message(message.channel, msg)
+                        else:
+                            msg = "[!] You did not provide any information."
+                            await client.send_message(message.channel, msg)
                     else:
                         if table.get(roleplay_query.name == msg[2]) is None:
                             # Then this character does not exist.
@@ -162,7 +178,7 @@ class Roleplay(BotModule):
                                     if table.get(roleplay_query.channel == msg[3]) is not None:
                                         table.remove(roleplay_query.channel == msg[3])
                                         msg = "[:ok_hand:] Removed date in that channel."
-                                        await clieng.send_message(message.channel, msg)
+                                        await client.send_message(message.channel, msg)
                                     else:
                                         msg = "[!] That channel does not have an existing date."
                                         await client.send_message(message.channel, msg)
