@@ -119,15 +119,14 @@ class Roleplay(BotModule):
                             await client.send_message(message.channel, msg)
                         else:
                             character = table.get(roleplay_query.name == msg[2])
-                            text = 'By: ' + character['author'] + '\n' \
-                                   'Gender: ' + character['gender'] + '\n' \
-                                   'Species: ' + character['species'] + '\n' \
-                                   'Status: ' + character['status'] + '\n' \
-                                   'Age: ' + character['age'] + '\n' \
-                                   'Height: ' + character['height'] + '\n' \
-                                   'Weight: ' + character['weight'] + '\n' \
-                                   'Description: ' + character['desc'] + '\n'
-                            embed = discord.Embed(title=character['name'], description=text, colour=character['colour'])
+                            embed = discord.Embed(title=character['name'], description="By: " + character['author'], colour=character['colour'])
+                            embed.add_field(name="Gender:", value=character['gender'], inline=True)
+                            embed.add_field(name="Species:", value=character['species'], inline=True)
+                            embed.add_field(name="Age:", value=character['age'], inline=True)
+                            embed.add_field(name="Status:", value=character['status'], inline=True)
+                            embed.add_field(name="Height", value=character['height'], inline=True)
+                            embed.add_field(name="Weight:", value=character['weight'], inline=True)
+                            embed.add_field(name="Description:", value=character['desc'], inline=True)
                             embed.set_image(url=character['pic'])
                             await client.send_message(message.channel, embed=embed)
                 elif msg[1] == 'day':
