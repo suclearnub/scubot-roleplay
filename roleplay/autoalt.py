@@ -5,6 +5,10 @@ import time
 import asyncio
 import base64
 
+class WrappedMessage():
+    def __init__(self, message, channel):
+        self.channel = channel
+        self.message = message
 
 class AutoAlt(BotModule):
     name = 'autoalt'
@@ -28,6 +32,9 @@ class AutoAlt(BotModule):
     global test
     test = discord.Client()
 
+    global speak
+    speak = discord.Client()
+
     @test.event
     async def on_ready():
         print("ready")
@@ -38,15 +45,34 @@ class AutoAlt(BotModule):
             pass
         print("logged out")
 
+    @speak.event
+    async def on_ready():
+        print("ready")
+        print(speak.user.name)
+        channel = speak.get_channel(wrap.channel)
+        await speak.send_message(channel, wrap.message)
+        try:
+            await tclient.logout()
+        except TypeError:
+            pass
+
+
     async def login_test(self, token, tclient):
         try:
             await tclient.start(token)
-            print("it works")
             tclient._closed.clear()
             tclient.http.recreate()
             return True
         except discord.LoginFailure:
             return False
+
+    # No try-catch loop here, we'll wrap the whole function when we call it instead.
+    async def login_normal(self, token, tclient):
+        await tclient.start(token)
+        tclient._closed.clear()
+        tclient.http.recreate()
+        print("logged out")
+
 
     async def parse_command(self, message, client):
         #test = discord.Client() # We have to reset it unfortunately
@@ -100,4 +126,20 @@ class AutoAlt(BotModule):
         elif msg[1] == 'help':
             pass
         else:
-            pass
+            # If it's not those 'special keywords' then it must be a 'bot say' command.
+            if len(msg) >= 3:
+                if self.module_db.get(target.name == msg[1]) is None:
+                    send_msg = "[!] This character does not exist."
+                    await client.send_message(message.channel, send_msg)
+                    return 0
+                if self.module_db.get(target.name == msg[1])['userid'] != message.author.id:
+                    send_msg = "[!] This isn't your character."
+                    await client.send_message(message.channel, send_msg)
+                    return 0
+                character = self.module_db.get(target.name == msg[1])
+                global wrap
+                wrap = WrappedMessage(msg[2], message.channel.id)
+                await self.login_normal(character['token'], speak)
+            else:
+                send_msg = "[!] Missing arguments."
+                await client.send_message(message.channel, send_msg)
