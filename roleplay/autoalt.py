@@ -3,6 +3,7 @@ from modules.botModule import *
 import shlex
 import time
 import asyncio
+import base64
 
 
 class AutoAlt(BotModule):
@@ -68,7 +69,8 @@ class AutoAlt(BotModule):
                     send_msg = "[!] Could not log in to that character's account. Perhaps your token is wrong?"
                     await client.edit_message(login_message, send_msg)
                     return 0
-                #self.module_db.insert({'charactername': msg[2], 'token': msg[3], 'userid': message.author.id, 'botid': await self.get_id_from_token(msg[3])})
+                bot_id = base64.b64decode(msg[3].split(".")[0]).decode('utf-8')
+                self.module_db.insert({'name': msg[2], 'token': msg[3], 'userid': message.author.id, 'botid': bot_id})
                 send_msg = "[:ok_hand:] Character added."
                 await client.edit_message(login_message, send_msg)
             else:
@@ -83,14 +85,14 @@ class AutoAlt(BotModule):
                     send_msg = "[!] This character does not exist."
                     await client.send_message(message.channel, send_msg)
                     return 0
-                character_token = self.module_db.get(target.name == msg[2])['token']
-                if not self.login_test(character_token, test):
+                character = self.module_db.get(target.name == msg[2])
+                if not await self.login_test(character['token'], test):
                     send_msg = "[!] Could not log in to that character's account. Perhaps your token is wrong?"
                     await client.edit_message(login_message, send_msg)
                     return 0
                 perm = discord.Permissions.text()
-                url = discord.utils.oauth_url(self.module_db.get(target.name == msg[2])['botid'], permissions=perm, server=None, redirect_uri=None)
-                send_msg = "Please give this link to the server owner and set up all relevant roles. " + url
+                url = discord.utils.oauth_url(character['botid'], permissions=perm, server=None, redirect_uri=None)
+                send_msg = "Please give this link to the server owner and set up all relevant roles. <" + url + ">"
                 await client.send_message(message.author, send_msg)
             else:
                 send_msg = "[!] Missing arguments."
