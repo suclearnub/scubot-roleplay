@@ -2,6 +2,8 @@ import discord
 from modules.botModule import *
 import shlex
 import time
+import asyncio
+
 
 class AutoAlt(BotModule):
     name = 'autoalt'
@@ -12,7 +14,7 @@ class AutoAlt(BotModule):
                 '`!say new [charactername] [bot_token]` - adds a new character for use. \n' \
                 '`!say remove [charactername]` - removes a character that you own. \n' \
                 '`!say invite [charactername]` - get help with adding a character to this server.\n' \
-                '`!say remove [charactername]` - removes a character that you own.'
+                '`!say help` - help with making a new bot'
 
     trigger_string = 'say'
 
@@ -22,21 +24,36 @@ class AutoAlt(BotModule):
 
     protected_names = ['new', 'remove', 'invite'] # These are protected names reserved for the bot.
 
-    async def login_test(self, token):
+    global test
+    test = discord.Client()
+
+    @test.event
+    async def on_ready():
+        print("ready")
+        print(test.user.name)
         try:
-            test_client = discord.Client()
-            test_client.run(token)
-            test_client.logout
+            await test.logout()
+        except TypeError:
+            pass
+        print("logged out")
+
+    async def login_test(self, token, tclient):
+        try:
+            await tclient.start(token)
+            print("it works")
+            tclient._closed.clear()
+            tclient.http.recreate()
             return True
-        except LoginFailure:
+        except discord.LoginFailure:
             return False
 
-
     async def parse_command(self, message, client):
+        #test = discord.Client() # We have to reset it unfortunately
         target = Query()
         msg = shlex.split(message.content)
         if msg[1] == 'new':
-            if len(msg) > 4:
+            if len(msg) >= 4:
+                msg[2] = msg[2].lower()
                 if msg[2] in self.protected_names:
                     send_msg = "[!] The character you are trying to create is a protected name. Please choose another name."
                     await client.send_message(message.channel, send_msg)
@@ -47,11 +64,11 @@ class AutoAlt(BotModule):
                     return 0
                 send_msg = "I will now test login credentials."
                 login_message = await client.send_message(message.channel, send_msg)
-                if not self.login_test(msg[3]):
+                if not await self.login_test(msg[3], test):
                     send_msg = "[!] Could not log in to that character's account. Perhaps your token is wrong?"
                     await client.edit_message(login_message, send_msg)
                     return 0
-                self.module_db.insert({'charactername': msg[2], 'token': msg[3], 'userid': message.author.id})
+                #self.module_db.insert({'charactername': msg[2], 'token': msg[3], 'userid': message.author.id, 'botid': await self.get_id_from_token(msg[3])})
                 send_msg = "[:ok_hand:] Character added."
                 await client.edit_message(login_message, send_msg)
             else:
@@ -59,6 +76,25 @@ class AutoAlt(BotModule):
                 await client.send_message(message.channel, send_msg)
         elif msg[1] == 'remove':
             pass
+        elif msg[1] == 'invite':
+            if len(msg) >= 3:
+                msg[2] = msg[2].lower()
+                if self.module_db.get(target.name == msg[2]) is None:
+                    send_msg = "[!] This character does not exist."
+                    await client.send_message(message.channel, send_msg)
+                    return 0
+                character_token = self.module_db.get(target.name == msg[2])['token']
+                if not self.login_test(character_token, test):
+                    send_msg = "[!] Could not log in to that character's account. Perhaps your token is wrong?"
+                    await client.edit_message(login_message, send_msg)
+                    return 0
+                perm = discord.Permissions.text()
+                url = discord.utils.oauth_url(self.module_db.get(target.name == msg[2])['botid'], permissions=perm, server=None, redirect_uri=None)
+                send_msg = "Please give this link to the server owner and set up all relevant roles. " + url
+                await client.send_message(message.author, send_msg)
+            else:
+                send_msg = "[!] Missing arguments."
+                await client.send_message(message.channel, send_msg)
         elif msg[1] == 'help':
             pass
         else:
